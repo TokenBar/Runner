@@ -94,7 +94,7 @@ jobs:
       working-directory: source
       run: |
         cd ../tb_core
-        cmake -DCMAKE_BUILD_TYPE=Release -S . -B "./build"
+        cmake -DCMAKE_BUILD_TYPE=Release -DAPI_SERVICE=ON -S . -B "./build"
         cmake --build ./build
         
     - name: Configure AWS credentials
@@ -110,7 +110,7 @@ jobs:
       
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
-      working-directory: tb_core
+      working-directory: tb_core/ApiService
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
@@ -122,7 +122,7 @@ jobs:
         docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.SHORT_SHA }}
     
     - name: Install and configure kubectl
-      working-directory: tb_core
+      working-directory: tb_core/ApiService
       run: |
         VERSION=$(curl --silent https://storage.googleapis.com/kubernetes-release/release/stable.txt)
         curl https://storage.googleapis.com/kubernetes-release/release/$VERSION/bin/linux/amd64/kubectl \
@@ -134,7 +134,7 @@ jobs:
         echo ${{ secrets.KUBE_CONFIG_DATA }} | base64 --decode > kubeconfig.yaml
 
     - name: Deploy
-      working-directory: tb_core
+      working-directory: tb_core/ApiService
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
