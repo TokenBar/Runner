@@ -58,14 +58,17 @@ jobs:
           submodules: recursive
           fetch-depth: 0
       
-#    - name: Download Qt (desktop)
-#      id: qt-desktop
-#      uses: jurplel/install-qt-action@v3
-#      with:
-#        aqtversion: ==2.1.*
-#        version: ${{ env.QT_VERSION }}
-#        modules: qthttpserver
-#        set-env: true
+    - name: Setup ninja
+        uses: seanmiddleditch/gha-setup-ninja@v3
+        
+    - name: Download Qt (desktop)
+      id: qt-desktop
+      uses: jurplel/install-qt-action@v3
+      with:
+        aqtversion: ==2.1.*
+        version: ${{ env.QT_VERSION }}
+        modules: qthttpserver
+        set-env: true
 
     - name: Setup SSH
       uses: MrSquaare/ssh-setup-action@v1
@@ -82,10 +85,18 @@ jobs:
         git checkout develop
         cd ../source
         
-    - name: Cloning EventPay switching to develop
+    - name: Build (Release)
       working-directory: source
       run: |
-        cd ..
+        cd ../tb_core
+        cmake -DCMAKE_BUILD_TYPE=Release -S . -B "./build"
+        cmake --build ./build
+        
+    - name: Build (Release)
+      working-directory: source
+      run: |
+        cd ../tb_core
+        cd build
         pwd
         ls
 
