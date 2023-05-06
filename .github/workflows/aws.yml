@@ -57,22 +57,15 @@ jobs:
           path: source
           submodules: recursive
           fetch-depth: 0
-          
-    - name: Cloning EventPay switching to develop
-      working-directory: source
-      run: |
-        cd ..
-        pwd
-        ls
       
-    - name: Download Qt (desktop)
-      id: qt-desktop
-      uses: jurplel/install-qt-action@v3
-      with:
-        aqtversion: ==2.1.*
-        version: ${{ env.QT_VERSION }}
-        modules: qthttpserver
-        set-env: true
+#    - name: Download Qt (desktop)
+#      id: qt-desktop
+#      uses: jurplel/install-qt-action@v3
+#      with:
+#        aqtversion: ==2.1.*
+#        version: ${{ env.QT_VERSION }}
+#        modules: qthttpserver
+#        set-env: true
 
     - name: Setup SSH
       uses: MrSquaare/ssh-setup-action@v1
@@ -88,6 +81,13 @@ jobs:
         cd tb_core
         git checkout develop
         cd ../source
+        
+    - name: Cloning EventPay switching to develop
+      working-directory: source
+      run: |
+        cd ..
+        pwd
+        ls
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
