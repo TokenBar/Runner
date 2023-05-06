@@ -44,6 +44,7 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
   KUBE_NAMESPACE: production
+  SHORT_SHA: $(echo ${{ github.sha }} | cut -c 1-8)
 
 permissions:
   contents: read
