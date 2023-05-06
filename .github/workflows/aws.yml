@@ -94,8 +94,8 @@ jobs:
       working-directory: source
       run: |
         cd ../tb_core
-        cmake -DCMAKE_BUILD_TYPE=Release -DAPI_SERVICE=ON -S . -B "./build"
-        cmake --build ./build
+        cmake -DCMAKE_BUILD_TYPE=Release -DAPI_SERVICE=ON -S . -B "./ApiService/build"
+        cmake --build ./ApiService/build
         
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
