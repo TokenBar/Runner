@@ -57,6 +57,13 @@ jobs:
           path: source
           submodules: recursive
           fetch-depth: 0
+          
+    - name: Cloning EventPay switching to develop
+      working-directory: source
+      run: |
+        cd ..
+        pwd
+        ls
       
     - name: Download Qt (desktop)
       id: qt-desktop
