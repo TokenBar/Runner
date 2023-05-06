@@ -59,7 +59,7 @@ jobs:
           fetch-depth: 0
       
     - name: Setup ninja
-        uses: seanmiddleditch/gha-setup-ninja@v3
+      uses: seanmiddleditch/gha-setup-ninja@v3
         
     - name: Download Qt (desktop)
       id: qt-desktop
