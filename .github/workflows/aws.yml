@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   deploy:
-    name: ApiService
+    name: Deploy to AWS-EKS
     runs-on: ubuntu-latest
     environment: production
     
@@ -69,16 +69,16 @@ jobs:
           host: github.com
           private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Cloning EventPay switching to develop
+    - name: Cloning EventPay switching to master
       working-directory: source
       run: |
         cd ..
         git clone git@github.com:TokenBar/tb_core.git
         cd tb_core
-        git checkout develop
+        git checkout master
         cd ../source
         
-    - name: Build (Release)
+    - name: Build
       working-directory: source
       run: |
         cd ../tb_core
