@@ -25,10 +25,23 @@ jobs:
     
     strategy:
       matrix:
-        microService: ["ApiService"]
+        microService: ["ApiService", "PaymentService", "UserService"]
         include:
           - microService: "ApiService"
             ECR_REPOSITORY: "eventpay-api-repository"
+            BUILD_API: "ON"
+            BUILD_PAYMENT: "OFF"
+            BUILD_USER: "OFF"
+          - microService: "PaymentService"
+            ECR_REPOSITORY: "eventpay-payment-repository"
+            BUILD_API: "OFF"
+            BUILD_PAYMENT: "ON"
+            BUILD_USER: "OFF"
+          - microService: "UserService"
+            ECR_REPOSITORY: "eventpay-user-repository"
+            BUILD_API: "OFF"
+            BUILD_PAYMENT: "OFF"
+            BUILD_USER: "ON"
 
     steps:
     - name: Checkout
@@ -69,7 +82,7 @@ jobs:
       working-directory: source
       run: |
         cd ../tb_core
-        cmake -DCMAKE_BUILD_TYPE=Release -DAPI_SERVICE=ON -S . -B "./${{ matrix.microService }}/build"
+        cmake -DCMAKE_BUILD_TYPE=Release -DAPI_SERVICE=${{ matrix.BUILD_API }} -DPAYMENT_SERVICE=${{ matrix.BUILD_PAYMENT }} -DUSER_SERVICE=${{ matrix.BUILD_USER }} -S . -B "./${{ matrix.microService }}/build"
         cmake --build ./${{ matrix.microService }}/build
         
     - name: Configure AWS credentials
