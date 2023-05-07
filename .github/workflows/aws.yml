@@ -5,7 +5,6 @@ on: workflow_dispatch
 env:
   QT_VERSION: 6.4.3
   AWS_REGION: eu-west-3                             # set this to your preferred AWS region, e.g. us-west-1
-#  ECR_REPOSITORY: eventpay-ecr-repository           # set this to your Amazon ECR repository name
   ECS_CLUSTER: EventPayCluster                      # set this to your Amazon ECS cluster name
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -27,16 +26,19 @@ jobs:
         include:
           - microService: "ApiService"
             ECR_REPOSITORY: "eventpay-api-repository"
+            DEPLOYMENT_NAME: "api"
             BUILD_API: "ON"
             BUILD_PAYMENT: "OFF"
             BUILD_USER: "OFF"
           - microService: "PaymentService"
             ECR_REPOSITORY: "eventpay-payment-repository"
+            DEPLOYMENT_NAME: "payment"
             BUILD_API: "OFF"
             BUILD_PAYMENT: "ON"
             BUILD_USER: "OFF"
           - microService: "UserService"
             ECR_REPOSITORY: "eventpay-user-repository"
+            DEPLOYMENT_NAME: "user"
             BUILD_API: "OFF"
             BUILD_PAYMENT: "OFF"
             BUILD_USER: "ON"
@@ -129,3 +131,4 @@ jobs:
         export KUBECONFIG=kubeconfig.yaml
         envsubst < k8s/kustomization.tmpl.yaml > k8s/kustomization.yaml
         kubectl kustomize k8s | kubectl apply -f -
+        kubectl rollout restart deployment ${{ matrix.DEPLOYMENT_NAME }} --namespace=eventpay
