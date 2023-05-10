@@ -48,7 +48,7 @@ jobs:
         with:
           aqtversion: ==2.1.*
           version: ${{ env.QT_VERSION }}
-          modules: qtnetworkauth
+          modules: 'qtnetworkauth qtwebview'
           set-env: false
           
       - name: Download Qt (Android, armv7)
@@ -59,7 +59,7 @@ jobs:
           version: ${{ env.QT_VERSION }}
           target: android
           arch: android_armv7
-          modules: qtnetworkauth
+          modules: 'qtnetworkauth qtwebview'
 
       - name: Download Qt (Android, arm64_v8a)
         id: qt-android-arm64_v8a
@@ -69,7 +69,7 @@ jobs:
           version: ${{ env.QT_VERSION }}
           target: android
           arch: android_arm64_v8a
-          modules: qtnetworkauth
+          modules: 'qtnetworkauth qtwebview'
           
       - name: Download Qt (Android, x86)
         id: qt-android-x86
@@ -79,7 +79,7 @@ jobs:
           version: ${{ env.QT_VERSION }}
           target: android
           arch: android_x86
-          modules: qtnetworkauth
+          modules: 'qtnetworkauth qtwebview'
           
       - name: Download Qt (Android, x86_64)
         id: qt-android-x86_64
@@ -89,13 +89,13 @@ jobs:
           version: ${{ env.QT_VERSION }}
           target: android
           arch: android_x86_64
-          modules: qtnetworkauth
+          modules: 'qtnetworkauth qtwebview'
 
       - name: Setup SSH
         uses: MrSquaare/ssh-setup-action@v1
         with:
-            host: github.com
-            private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          host: github.com
+          private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Cloning tb_core
         working-directory: source
