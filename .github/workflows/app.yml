@@ -50,7 +50,7 @@ jobs:
         with:
           aqtversion: ==2.1.*
           version: ${{ env.QT_VERSION }}
-          modules: qtnetworkauth
+          modules: 'qtnetworkauth qtwebview'
           set-env: false
           
       - name: Download Qt (iOS)
@@ -61,7 +61,7 @@ jobs:
           version: ${{ env.QT_VERSION }}
           target: ios
           arch: ios
-          modules: qtnetworkauth
+          modules: 'qtnetworkauth qtwebview'
 
       - name: Setup SSH
         uses: MrSquaare/ssh-setup-action@v1
