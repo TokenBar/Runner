@@ -1,0 +1,182 @@
+name: EventPay
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "**"
+    paths-ignore:
+      - ".gitignore"
+      - "README.md"
+      # ignore CI for other platforms
+      - ".github/actions/**"
+      - ".github/workflows/CI-iOS-Qt5.yml"
+      - ".github/workflows/CI-iOS.yml"
+      - ".github/workflows/CI-Linux.yml"
+      - ".github/workflows/CI-macOS.yml"
+      - ".github/workflows/CI-Windows-Qt5.yml"
+      - ".github/workflows/CI-Windows.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  QT_VERSION: 6.4.3
+  BRANCH_NAME: develop
+  
+jobs:
+  buildAndroid:
+    if: "contains(github.event.head_commit.message, 'build android')"
+    name: Build EventPay (Android)
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        type: [play]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          path: source
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Download Qt (desktop)
+        id: qt-desktop
+        uses: jurplel/install-qt-action@v3
+        with:
+          aqtversion: ==2.1.*
+          version: ${{ env.QT_VERSION }}
+          modules: qtnetworkauth
+          set-env: false
+          
+      - name: Download Qt (Android, armv7)
+        id: qt-android-armv7
+        uses: jurplel/install-qt-action@v3
+        with:
+          aqtversion: ==2.1.*
+          version: ${{ env.QT_VERSION }}
+          target: android
+          arch: android_armv7
+          modules: qtnetworkauth
+
+      - name: Download Qt (Android, arm64_v8a)
+        id: qt-android-arm64_v8a
+        uses: jurplel/install-qt-action@v3
+        with:
+          aqtversion: ==2.1.*
+          version: ${{ env.QT_VERSION }}
+          target: android
+          arch: android_arm64_v8a
+          modules: qtnetworkauth
+          
+      - name: Download Qt (Android, x86)
+        id: qt-android-x86
+        uses: jurplel/install-qt-action@v3
+        with:
+          aqtversion: ==2.1.*
+          version: ${{ env.QT_VERSION }}
+          target: android
+          arch: android_x86
+          modules: qtnetworkauth
+          
+      - name: Download Qt (Android, x86_64)
+        id: qt-android-x86_64
+        uses: jurplel/install-qt-action@v3
+        with:
+          aqtversion: ==2.1.*
+          version: ${{ env.QT_VERSION }}
+          target: android
+          arch: android_x86_64
+          modules: qtnetworkauth
+
+      - name: Setup SSH
+        uses: MrSquaare/ssh-setup-action@v1
+        with:
+            host: github.com
+            private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Cloning tb_core
+        working-directory: source
+        run: |
+          cd ..
+          git clone git@github.com:TokenBar/tb_core.git
+          cd tb_core
+          git checkout ${{ env.BRANCH_NAME }}
+          cd ../source
+
+      - name: Cloning EventPay frontend
+        working-directory: source
+        run: |
+          cd ..
+          git clone git@github.com:TokenBar/frontend.git
+          cd frontend
+          git checkout ${{ env.BRANCH_NAME }}
+          cd ../source
+
+      - name: Setup Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          working-directory: source/../frontend
+
+      - name: Set up OpenJDK 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: "adopt"
+          java-version: "11"
+
+      - name: Setup ninja
+        uses: seanmiddleditch/gha-setup-ninja@v3
+
+      - name: Set up ccache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: Android_${{ matrix.type }}
+        
+      - name: Configure & prepare
+        working-directory: source
+        env:
+          CONFIG_CMAKE: ${{ secrets.CONFIG_CMAKE }}
+          GOOGLE_DEPLOYMENT_KEY: ${{ secrets.GOOGLE_DEPLOYMENT_KEY }}
+          GOOGLE_SERVICES_ANDROID: ${{ secrets.GOOGLE_SERVICES_ANDROID }}
+        run: |
+          #echo $CONFIG_CMAKE | base64 --decode > Config.cmake
+          #echo $GOOGLE_DEPLOYMENT_KEY | base64 --decode > google-play_api.json
+          #echo $GOOGLE_SERVICES_ANDROID | base64 --decode > resources/Android/output/google-services.json
+
+      - name: Build
+        working-directory: source/../frontend
+        env:
+          BUILD_TYPE: ${{ matrix.type }}
+        run: |
+          export QT_HOST_PATH="$(readlink -f "$Qt6_DIR/../gcc_64")"
+
+          bundle exec fastlane android ${BUILD_TYPE}
+          
+      - name: Sign app APK
+        uses: r0adkll/sign-android-release@v1
+        # ID used to access action output
+        id: sign_app
+        with:
+          releaseDirectory: frontend/fastlane/build/android_${{ matrix.type }}
+          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
+          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        env:
+          # override default build-tools version (29.0.3) -- optional
+          BUILD_TOOLS_VERSION: "33.0.0"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Android-package_${{ matrix.type }}
+          path: frontend/fastlane/build/android_${{ matrix.type }}/PiDMXMobile.*
+
+      - name: Deploy
+        working-directory: source/../frontend
+#        if: github.ref_name == 'deploy' && matrix.type == 'play'
+        run: |
+          bundle exec fastlane android play_deploy
