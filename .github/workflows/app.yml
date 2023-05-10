@@ -172,7 +172,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: Android-package_${{ matrix.type }}
-          path: frontend/fastlane/build/android_${{ matrix.type }}/PiDMXMobile.*
+          path: frontend/fastlane/build/android_${{ matrix.type }}/EventPay.*
 
       - name: Deploy
         working-directory: source/../frontend
