@@ -7,7 +7,6 @@ concurrency:
 
 env:
   QT_VERSION: 6.4.3
-  BRANCH_NAME: develop
   
 jobs:
   buildIos:
@@ -52,22 +51,44 @@ jobs:
             host: github.com
             private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Cloning tb_core
+      - name: Cloning tb_core develop
+        if: github.ref == 'refs/heads/develop'
         working-directory: source
         run: |
           cd ..
           git clone git@github.com:TokenBar/tb_core.git
           cd tb_core
-          git checkout ${{ env.BRANCH_NAME }}
+          git checkout develop
           cd ../source
 
-      - name: Cloning frontend
+      - name: Cloning tb_core master
+        if: github.ref == 'refs/heads/main'
+        working-directory: source
+        run: |
+          cd ..
+          git clone git@github.com:TokenBar/tb_core.git
+          cd tb_core
+          git checkout master
+          cd ../source
+
+      - name: Cloning frontend develop
+        if: github.ref == 'refs/heads/develop'
         working-directory: source
         run: |
           cd ..
           git clone git@github.com:TokenBar/frontend.git
           cd frontend
-          git checkout ${{ env.BRANCH_NAME }}
+          git checkout develop
+          cd ../source
+      
+      - name: Cloning frontend master
+        if: github.ref == 'refs/heads/main'
+        working-directory: source
+        run: |
+          cd ..
+          git clone git@github.com:TokenBar/frontend.git
+          cd frontend
+          git checkout master
           cd ../source
 
       - name: Setup Fastlane
@@ -93,7 +114,7 @@ jobs:
         run: |
           export FL_RUN_CMAKE_XCODE_PATH="${MD_APPLE_SDK_ROOT}"
           export QT_HOST_PATH="$(readlink -f "$Qt6_DIR/../macos")"
-          bundle exec fastlane ios staging
+          bundle exec fastlane ios qa
 
       - name: Build for production
         if: github.ref == 'refs/heads/main'
