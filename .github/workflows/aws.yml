@@ -122,7 +122,8 @@ jobs:
         sudo mv kubectl /usr/local/bin/
         echo ${{ secrets.KUBE_CONFIG_DATA }} | base64 --decode > kubeconfig.yaml
 
-    - name: Deploy
+    - name: Deploy to qa
+      if: github.ref == 'refs/heads/develop'
       working-directory: tb_core/${{ matrix.microService }}
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -130,6 +131,19 @@ jobs:
         export ECR_REPOSITORY=${{ env.ECR_REGISTRY }}/${{ matrix.ECR_REPOSITORY }}
         export IMAGE_TAG=${{ env.SHORT_SHA }}
         export KUBECONFIG=kubeconfig.yaml
-        envsubst < k8s/kustomization.tmpl.yaml > k8s/kustomization.yaml
+        envsubst < k8s/qa/kustomization.tmpl.yaml > k8s/kustomization.yaml
+        kubectl kustomize k8s | kubectl apply -f -
+        kubectl rollout restart deployment ${{ matrix.DEPLOYMENT_NAME }} --namespace=eventpay
+
+    - name: Deploy to prod
+      if: github.ref == 'refs/heads/main'
+      working-directory: tb_core/${{ matrix.microService }}
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        export ECR_REPOSITORY=${{ env.ECR_REGISTRY }}/${{ matrix.ECR_REPOSITORY }}
+        export IMAGE_TAG=${{ env.SHORT_SHA }}
+        export KUBECONFIG=kubeconfig.yaml
+        envsubst < k8s/prod/kustomization.tmpl.yaml > k8s/kustomization.yaml
         kubectl kustomize k8s | kubectl apply -f -
         kubectl rollout restart deployment ${{ matrix.DEPLOYMENT_NAME }} --namespace=eventpay
