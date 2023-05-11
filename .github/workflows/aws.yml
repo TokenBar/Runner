@@ -69,7 +69,7 @@ jobs:
           host: github.com
           private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Cloning EventPay switching to develop
+    - name: Cloning tb_core switching to develop
       if: github.ref == 'refs/heads/develop'
       working-directory: source
       run: |
@@ -79,7 +79,7 @@ jobs:
         git checkout develop
         cd ../source
 
-    - name: Cloning EventPay switching to master
+    - name: Cloning tb_core switching to master
       if: github.ref == 'refs/heads/main'
       working-directory: source
       run: |
@@ -142,8 +142,8 @@ jobs:
         export IMAGE_TAG=${{ env.SHORT_SHA }}
         export KUBECONFIG=kubeconfig.yaml
         envsubst < k8s/qa/kustomization.tmpl.yaml > k8s/qa/kustomization.yaml
-        kubectl kustomize k8s/qa | kubectl apply -f -
-        kubectl rollout restart deployment ${{ matrix.DEPLOYMENT_NAME }} --namespace=eventpay
+        kubectl kustomize k8s | kubectl apply -f -
+        kubectl rollout restart deployment ${{ matrix.DEPLOYMENT_NAME}} --namespace=eventpay
 
     - name: Deploy to prod
       if: github.ref == 'refs/heads/main'
@@ -155,5 +155,5 @@ jobs:
         export IMAGE_TAG=${{ env.SHORT_SHA }}
         export KUBECONFIG=kubeconfig.yaml
         envsubst < k8s/prod/kustomization.tmpl.yaml > k8s/prod/kustomization.yaml
-        kubectl kustomize k8s/prod | kubectl apply -f -
-        kubectl rollout restart deployment ${{ matrix.DEPLOYMENT_NAME }} --namespace=eventpay
+        kubectl kustomize k8s | kubectl apply -f -
+        kubectl rollout restart deployment ${{ matrix.DEPLOYMENT_NAME}} --namespace=eventpay
