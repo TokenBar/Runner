@@ -89,11 +89,20 @@ jobs:
         git checkout master
         cd ../source
         
-    - name: Build
+    - name: Build for QA
+      if: github.ref == 'refs/heads/develop'
       working-directory: source
       run: |
         cd ../tb_core
-        cmake -DCMAKE_BUILD_TYPE=Release -DAPI_SERVICE=${{ matrix.BUILD_API }} -DPAYMENT_SERVICE=${{ matrix.BUILD_PAYMENT }} -DUSER_SERVICE=${{ matrix.BUILD_USER }} -S . -B "./${{ matrix.microService }}/build"
+        cmake -DCMAKE_BUILD_TYPE=Release -DQA:BOOL=ON -DAPI_SERVICE=${{ matrix.BUILD_API }} -DPAYMENT_SERVICE=${{ matrix.BUILD_PAYMENT }} -DUSER_SERVICE=${{ matrix.BUILD_USER }} -S . -B "./${{ matrix.microService }}/build"
+        cmake --build ./${{ matrix.microService }}/build
+
+    - name: Build for Prod
+      if: github.ref == 'refs/heads/main'
+      working-directory: source
+      run: |
+        cd ../tb_core
+        cmake -DCMAKE_BUILD_TYPE=Release -DPRODUCTION:BOOL=ON -DAPI_SERVICE=${{ matrix.BUILD_API }} -DPAYMENT_SERVICE=${{ matrix.BUILD_PAYMENT }} -DUSER_SERVICE=${{ matrix.BUILD_USER }} -S . -B "./${{ matrix.microService }}/build"
         cmake --build ./${{ matrix.microService }}/build
         
     - name: Configure AWS credentials
