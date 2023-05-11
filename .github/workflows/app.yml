@@ -85,7 +85,7 @@ jobs:
           bundle exec fastlane ios prepare_qt6
           echo $CONFIG_CMAKE | base64 --decode > Config.cmake
           
-      - name: Build
+      - name: Build for staging
         if: github.ref == 'refs/heads/develop'
         working-directory: source/../frontend
         env:
@@ -95,7 +95,7 @@ jobs:
           export QT_HOST_PATH="$(readlink -f "$Qt6_DIR/../macos")"
           bundle exec fastlane ios staging
 
-      - name: Build
+      - name: Build for production
         if: github.ref == 'refs/heads/main'
         working-directory: source/../frontend
         env:
