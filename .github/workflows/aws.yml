@@ -71,12 +71,23 @@ jobs:
           private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Cloning EventPay switching to develop
+      if: github.ref == 'refs/heads/develop'
       working-directory: source
       run: |
         cd ..
         git clone git@github.com:TokenBar/tb_core.git
         cd tb_core
-        git checkout ${{env.BRANCH_NAME}}
+        git checkout develop
+        cd ../source
+
+    - name: Cloning EventPay switching to master
+      if: github.ref == 'refs/heads/main'
+      working-directory: source
+      run: |
+        cd ..
+        git clone git@github.com:TokenBar/tb_core.git
+        cd tb_core
+        git checkout master
         cd ../source
         
     - name: Build
