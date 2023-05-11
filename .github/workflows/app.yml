@@ -85,7 +85,7 @@ jobs:
           bundle exec fastlane ios prepare_qt6
           echo $CONFIG_CMAKE | base64 --decode > Config.cmake
           
-      - name: Build for staging
+      - name: Build for qa
         if: github.ref == 'refs/heads/develop'
         working-directory: source/../frontend
         env:
