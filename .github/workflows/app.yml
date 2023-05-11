@@ -86,13 +86,24 @@ jobs:
           echo $CONFIG_CMAKE | base64 --decode > Config.cmake
           
       - name: Build
+        if: github.ref == 'refs/heads/develop'
         working-directory: source/../frontend
         env:
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
         run: |
           export FL_RUN_CMAKE_XCODE_PATH="${MD_APPLE_SDK_ROOT}"
           export QT_HOST_PATH="$(readlink -f "$Qt6_DIR/../macos")"
-          bundle exec fastlane ios testbuild
+          bundle exec fastlane ios staging
+
+      - name: Build
+        if: github.ref == 'refs/heads/main'
+        working-directory: source/../frontend
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+        run: |
+          export FL_RUN_CMAKE_XCODE_PATH="${MD_APPLE_SDK_ROOT}"
+          export QT_HOST_PATH="$(readlink -f "$Qt6_DIR/../macos")"
+          bundle exec fastlane ios production
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
