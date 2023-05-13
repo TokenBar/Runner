@@ -6,7 +6,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
-  QT_VERSION: 6.4.3
+  QT_VERSION: 6.5.0
   
 jobs:
   buildIos:
@@ -32,7 +32,7 @@ jobs:
         with:
           aqtversion: ==2.1.*
           version: ${{ env.QT_VERSION }}
-          modules: 'qtnetworkauth qtwebview'
+          modules: 'qtnetworkauth qtwebview qtmultimedia'
           set-env: false
           
       - name: Download Qt (iOS)
@@ -43,7 +43,7 @@ jobs:
           version: ${{ env.QT_VERSION }}
           target: ios
           arch: ios
-          modules: 'qtnetworkauth qtwebview'
+          modules: 'qtnetworkauth qtwebview qtmultimedia'
 
       - name: Setup SSH
         uses: MrSquaare/ssh-setup-action@v1
@@ -152,7 +152,7 @@ jobs:
         with:
           aqtversion: ==2.1.*
           version: ${{ env.QT_VERSION }}
-          modules: 'qtnetworkauth qtwebview'
+          modules: 'qtnetworkauth qtwebview qtmultimedia'
           set-env: false
           
       - name: Download Qt (Android, armv7)
@@ -163,7 +163,7 @@ jobs:
           version: ${{ env.QT_VERSION }}
           target: android
           arch: android_armv7
-          modules: 'qtnetworkauth qtwebview'
+          modules: 'qtnetworkauth qtwebview qtmultimedia'
 
       - name: Download Qt (Android, arm64_v8a)
         id: qt-android-arm64_v8a
@@ -173,7 +173,7 @@ jobs:
           version: ${{ env.QT_VERSION }}
           target: android
           arch: android_arm64_v8a
-          modules: 'qtnetworkauth qtwebview'
+          modules: 'qtnetworkauth qtwebview qtmultimedia'
           
       - name: Download Qt (Android, x86)
         id: qt-android-x86
@@ -183,7 +183,7 @@ jobs:
           version: ${{ env.QT_VERSION }}
           target: android
           arch: android_x86
-          modules: 'qtnetworkauth qtwebview'
+          modules: 'qtnetworkauth qtwebview qtmultimedia'
           
       - name: Download Qt (Android, x86_64)
         id: qt-android-x86_64
@@ -193,7 +193,7 @@ jobs:
           version: ${{ env.QT_VERSION }}
           target: android
           arch: android_x86_64
-          modules: 'qtnetworkauth qtwebview'
+          modules: 'qtnetworkauth qtwebview qtmultimedia'
 
       - name: Setup SSH
         uses: MrSquaare/ssh-setup-action@v1
