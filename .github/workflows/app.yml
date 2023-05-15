@@ -251,6 +251,7 @@ jobs:
           #echo $GOOGLE_SERVICES_ANDROID | base64 --decode > resources/Android/output/google-services.json
 
       - name: Build Qa
+        if: github.ref == 'refs/heads/develop'
         working-directory: source/../frontend
         env:
           BUILD_TYPE: ${{ matrix.type }}Qa
@@ -279,6 +280,7 @@ jobs:
           path: frontend/fastlane/build/android_${{ matrix.type }}/EventPay.*
 
       - name: Deploy QA
+        if: github.ref == 'refs/heads/develop'
         working-directory: source/../frontend
 #        if: github.ref_name == 'deploy' && matrix.type == 'play'
         run: |
