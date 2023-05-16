@@ -255,6 +255,7 @@ jobs:
         working-directory: source/../frontend
         env:
           BUILD_TYPE: ${{ matrix.type }}Qa
+          QA: ON
         run: |
           export QT_HOST_PATH="$(readlink -f "$Qt6_DIR/../gcc_64")"
 
