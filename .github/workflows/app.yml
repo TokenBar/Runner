@@ -258,6 +258,7 @@ jobs:
           QA: ON
         run: |
           export QT_HOST_PATH="$(readlink -f "$Qt6_DIR/../gcc_64")"
+          export QA=ON
 
           bundle exec fastlane android ${BUILD_TYPE}
           
