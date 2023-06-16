@@ -207,7 +207,7 @@ jobs:
           cd ..
           git clone git@github.com:TokenBar/tb_core.git
           cd tb_core
-          git checkout ${{ env.BRANCH_NAME }}
+          git checkout develop
           cd ../source
 
       - name: Cloning EventPay frontend
@@ -216,7 +216,7 @@ jobs:
           cd ..
           git clone git@github.com:TokenBar/frontend.git
           cd frontend
-          git checkout ${{ env.BRANCH_NAME }}
+          git checkout develop
           cd ../source
 
       - name: Setup Fastlane
@@ -255,8 +255,10 @@ jobs:
         working-directory: source/../frontend
         env:
           BUILD_TYPE: ${{ matrix.type }}Qa
+          QA: ON
         run: |
           export QT_HOST_PATH="$(readlink -f "$Qt6_DIR/../gcc_64")"
+          export QA=ON
 
           bundle exec fastlane android ${BUILD_TYPE}
           
