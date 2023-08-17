@@ -3,166 +3,166 @@ name: Deploy to Amazon ECS
 on: workflow_dispatch
 
 env:
-  QT_VERSION: 6.5.1
-  AWS_REGION: eu-west-3                             # set this to your preferred AWS region, e.g. us-west-1
-  ECS_CLUSTER: EventPayCluster                      # set this to your Amazon ECS cluster name
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
-  SHORT_SHA: $(echo ${{ github.sha }} | cut -c 1-8)
+    QT_VERSION: 6.5.2
+    AWS_REGION: eu-west-3 # set this to your preferred AWS region, e.g. us-west-1
+    ECS_CLUSTER: EventPayCluster # set this to your Amazon ECS cluster name
+    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+    SHORT_SHA: $(echo ${{ github.sha }} | cut -c 1-8)
 
 permissions:
-  contents: read
+    contents: read
 
 jobs:
-  deploy:
-    name: Deploy to AWS-EKS
-    runs-on: ubuntu-latest
-    environment: production
-    
-    strategy:
-      matrix:
-        microService: ["ApiService", "PaymentService", "UserService"]
-        include:
-          - microService: "ApiService"
-            ECR_REPOSITORY: "eventpay-api-repository"
-            DEPLOYMENT_NAME: "api"
-            BUILD_API: "ON"
-            BUILD_PAYMENT: "OFF"
-            BUILD_USER: "OFF"
-          - microService: "PaymentService"
-            ECR_REPOSITORY: "eventpay-payment-repository"
-            DEPLOYMENT_NAME: "payment"
-            BUILD_API: "OFF"
-            BUILD_PAYMENT: "ON"
-            BUILD_USER: "OFF"
-          - microService: "UserService"
-            ECR_REPOSITORY: "eventpay-user-repository"
-            DEPLOYMENT_NAME: "user"
-            BUILD_API: "OFF"
-            BUILD_PAYMENT: "OFF"
-            BUILD_USER: "ON"
+    deploy:
+        name: Deploy to AWS-EKS
+        runs-on: ubuntu-latest
+        environment: production
 
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-          path: source
-          submodules: recursive
-          fetch-depth: 0
-      
-    - name: Setup ninja
-      uses: seanmiddleditch/gha-setup-ninja@v3
-        
-    - name: Download Qt (desktop)
-      id: qt-desktop
-      uses: jurplel/install-qt-action@v3
-      with:
-        aqtversion: ==2.1.*
-        version: ${{ env.QT_VERSION }}
-        modules: 'qthttpserver qtwebsockets'
-        set-env: true
+        strategy:
+            matrix:
+                microService: ["ApiService", "PaymentService", "UserService"]
+                include:
+                    - microService: "ApiService"
+                      ECR_REPOSITORY: "eventpay-api-repository"
+                      DEPLOYMENT_NAME: "api"
+                      BUILD_API: "ON"
+                      BUILD_PAYMENT: "OFF"
+                      BUILD_USER: "OFF"
+                    - microService: "PaymentService"
+                      ECR_REPOSITORY: "eventpay-payment-repository"
+                      DEPLOYMENT_NAME: "payment"
+                      BUILD_API: "OFF"
+                      BUILD_PAYMENT: "ON"
+                      BUILD_USER: "OFF"
+                    - microService: "UserService"
+                      ECR_REPOSITORY: "eventpay-user-repository"
+                      DEPLOYMENT_NAME: "user"
+                      BUILD_API: "OFF"
+                      BUILD_PAYMENT: "OFF"
+                      BUILD_USER: "ON"
 
-    - name: Setup SSH
-      uses: MrSquaare/ssh-setup-action@v1
-      with:
-          host: github.com
-          private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+              with:
+                  path: source
+                  submodules: recursive
+                  fetch-depth: 0
 
-    - name: Cloning tb_core switching to develop
-      if: github.ref == 'refs/heads/develop'
-      working-directory: source
-      run: |
-        cd ..
-        git clone git@github.com:TokenBar/tb_core.git
-        cd tb_core
-        git checkout develop
-        cd ../source
+            - name: Setup ninja
+              uses: seanmiddleditch/gha-setup-ninja@v3
 
-    - name: Cloning tb_core switching to master
-      if: github.ref == 'refs/heads/main'
-      working-directory: source
-      run: |
-        cd ..
-        git clone git@github.com:TokenBar/tb_core.git
-        cd tb_core
-        git checkout master
-        cd ../source
-        
-    - name: Build for QA
-      if: github.ref == 'refs/heads/develop'
-      working-directory: source
-      run: |
-        cd ../tb_core
-        cmake -DCMAKE_BUILD_TYPE=Release -DQA:BOOL=ON -DAPI_SERVICE=${{ matrix.BUILD_API }} -DPAYMENT_SERVICE=${{ matrix.BUILD_PAYMENT }} -DUSER_SERVICE=${{ matrix.BUILD_USER }} -S . -B "./${{ matrix.microService }}/build"
-        cmake --build ./${{ matrix.microService }}/build
+            - name: Download Qt (desktop)
+              id: qt-desktop
+              uses: jurplel/install-qt-action@v3
+              with:
+                  aqtversion: ==2.1.*
+                  version: ${{ env.QT_VERSION }}
+                  modules: "qthttpserver qtwebsockets"
+                  set-env: true
 
-    - name: Build for Prod
-      if: github.ref == 'refs/heads/main'
-      working-directory: source
-      run: |
-        cd ../tb_core
-        cmake -DCMAKE_BUILD_TYPE=Release -DPRODUCTION:BOOL=ON -DAPI_SERVICE=${{ matrix.BUILD_API }} -DPAYMENT_SERVICE=${{ matrix.BUILD_PAYMENT }} -DUSER_SERVICE=${{ matrix.BUILD_USER }} -S . -B "./${{ matrix.microService }}/build"
-        cmake --build ./${{ matrix.microService }}/build
-        
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+            - name: Setup SSH
+              uses: MrSquaare/ssh-setup-action@v1
+              with:
+                  host: github.com
+                  private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
-      
-    - name: Build, tag, and push image to Amazon ECR
-      id: build-image
-      working-directory: tb_core/${{ matrix.microService }}
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      run: |
-        docker image build \
-        --tag ${{ env.ECR_REGISTRY }}/${{ matrix.ECR_REPOSITORY }}:latest \
-        --tag ${{ env.ECR_REGISTRY }}/${{ matrix.ECR_REPOSITORY }}:${{ env.SHORT_SHA }} \
-        .
-        docker push ${{ env.ECR_REGISTRY }}/${{ matrix.ECR_REPOSITORY }}:latest
-        docker push ${{ env.ECR_REGISTRY }}/${{ matrix.ECR_REPOSITORY }}:${{ env.SHORT_SHA }}
-    
-    - name: Install and configure kubectl
-      working-directory: tb_core/${{ matrix.microService }}
-      run: |
-        VERSION=$(curl --silent https://storage.googleapis.com/kubernetes-release/release/stable.txt)
-        curl https://storage.googleapis.com/kubernetes-release/release/$VERSION/bin/linux/amd64/kubectl \
-            --progress-bar \
-            --location \
-            --remote-name
-        chmod +x kubectl
-        sudo mv kubectl /usr/local/bin/
-        echo ${{ secrets.KUBE_CONFIG_DATA }} | base64 --decode > kubeconfig.yaml
+            - name: Cloning tb_core switching to develop
+              if: github.ref == 'refs/heads/develop'
+              working-directory: source
+              run: |
+                  cd ..
+                  git clone git@github.com:TokenBar/tb_core.git
+                  cd tb_core
+                  git checkout develop
+                  cd ../source
 
-    - name: Deploy to qa
-      if: github.ref == 'refs/heads/develop'
-      working-directory: tb_core/${{ matrix.microService }}
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      run: |
-        export ECR_REPOSITORY=${{ env.ECR_REGISTRY }}/${{ matrix.ECR_REPOSITORY }}
-        export IMAGE_TAG=${{ env.SHORT_SHA }}
-        export KUBECONFIG=kubeconfig.yaml
-        envsubst < k8s/qa/kustomization.tmpl.yaml > k8s/qa/kustomization.yaml
-        kubectl kustomize k8s/qa | kubectl apply -f -
-        kubectl rollout restart deployment ${{ matrix.DEPLOYMENT_NAME}} --namespace=eventpay
+            - name: Cloning tb_core switching to master
+              if: github.ref == 'refs/heads/main'
+              working-directory: source
+              run: |
+                  cd ..
+                  git clone git@github.com:TokenBar/tb_core.git
+                  cd tb_core
+                  git checkout master
+                  cd ../source
 
-    - name: Deploy to prod
-      if: github.ref == 'refs/heads/main'
-      working-directory: tb_core/${{ matrix.microService }}
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      run: |
-        export ECR_REPOSITORY=${{ env.ECR_REGISTRY }}/${{ matrix.ECR_REPOSITORY }}
-        export IMAGE_TAG=${{ env.SHORT_SHA }}
-        export KUBECONFIG=kubeconfig.yaml
-        envsubst < k8s/prod/kustomization.tmpl.yaml > k8s/prod/kustomization.yaml
-        kubectl kustomize k8s/prod | kubectl apply -f -
-        kubectl rollout restart deployment ${{ matrix.DEPLOYMENT_NAME}} --namespace=eventpay
+            - name: Build for QA
+              if: github.ref == 'refs/heads/develop'
+              working-directory: source
+              run: |
+                  cd ../tb_core
+                  cmake -DCMAKE_BUILD_TYPE=Release -DQA:BOOL=ON -DAPI_SERVICE=${{ matrix.BUILD_API }} -DPAYMENT_SERVICE=${{ matrix.BUILD_PAYMENT }} -DUSER_SERVICE=${{ matrix.BUILD_USER }} -S . -B "./${{ matrix.microService }}/build"
+                  cmake --build ./${{ matrix.microService }}/build
+
+            - name: Build for Prod
+              if: github.ref == 'refs/heads/main'
+              working-directory: source
+              run: |
+                  cd ../tb_core
+                  cmake -DCMAKE_BUILD_TYPE=Release -DPRODUCTION:BOOL=ON -DAPI_SERVICE=${{ matrix.BUILD_API }} -DPAYMENT_SERVICE=${{ matrix.BUILD_PAYMENT }} -DUSER_SERVICE=${{ matrix.BUILD_USER }} -S . -B "./${{ matrix.microService }}/build"
+                  cmake --build ./${{ matrix.microService }}/build
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
+
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v1
+
+            - name: Build, tag, and push image to Amazon ECR
+              id: build-image
+              working-directory: tb_core/${{ matrix.microService }}
+              env:
+                  ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+              run: |
+                  docker image build \
+                  --tag ${{ env.ECR_REGISTRY }}/${{ matrix.ECR_REPOSITORY }}:latest \
+                  --tag ${{ env.ECR_REGISTRY }}/${{ matrix.ECR_REPOSITORY }}:${{ env.SHORT_SHA }} \
+                  .
+                  docker push ${{ env.ECR_REGISTRY }}/${{ matrix.ECR_REPOSITORY }}:latest
+                  docker push ${{ env.ECR_REGISTRY }}/${{ matrix.ECR_REPOSITORY }}:${{ env.SHORT_SHA }}
+
+            - name: Install and configure kubectl
+              working-directory: tb_core/${{ matrix.microService }}
+              run: |
+                  VERSION=$(curl --silent https://storage.googleapis.com/kubernetes-release/release/stable.txt)
+                  curl https://storage.googleapis.com/kubernetes-release/release/$VERSION/bin/linux/amd64/kubectl \
+                      --progress-bar \
+                      --location \
+                      --remote-name
+                  chmod +x kubectl
+                  sudo mv kubectl /usr/local/bin/
+                  echo ${{ secrets.KUBE_CONFIG_DATA }} | base64 --decode > kubeconfig.yaml
+
+            - name: Deploy to qa
+              if: github.ref == 'refs/heads/develop'
+              working-directory: tb_core/${{ matrix.microService }}
+              env:
+                  ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+              run: |
+                  export ECR_REPOSITORY=${{ env.ECR_REGISTRY }}/${{ matrix.ECR_REPOSITORY }}
+                  export IMAGE_TAG=${{ env.SHORT_SHA }}
+                  export KUBECONFIG=kubeconfig.yaml
+                  envsubst < k8s/qa/kustomization.tmpl.yaml > k8s/qa/kustomization.yaml
+                  kubectl kustomize k8s/qa | kubectl apply -f -
+                  kubectl rollout restart deployment ${{ matrix.DEPLOYMENT_NAME}} --namespace=eventpay
+
+            - name: Deploy to prod
+              if: github.ref == 'refs/heads/main'
+              working-directory: tb_core/${{ matrix.microService }}
+              env:
+                  ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+              run: |
+                  export ECR_REPOSITORY=${{ env.ECR_REGISTRY }}/${{ matrix.ECR_REPOSITORY }}
+                  export IMAGE_TAG=${{ env.SHORT_SHA }}
+                  export KUBECONFIG=kubeconfig.yaml
+                  envsubst < k8s/prod/kustomization.tmpl.yaml > k8s/prod/kustomization.yaml
+                  kubectl kustomize k8s/prod | kubectl apply -f -
+                  kubectl rollout restart deployment ${{ matrix.DEPLOYMENT_NAME}} --namespace=eventpay
